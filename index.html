@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>转生之我是野菩萨</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+        #game-container {
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 0 10px rgba(255,255,255,0.1);
+            max-width: 100%;
+            width: 100%;
+        }
+        button {
+            background-color: #006400;
+            border: none;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100%;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            position: relative;
+            overflow: hidden;
+        }
+        #resources, #units, #upgrades {
+            margin-top: 15px;
+        }
+        .unit-row, .upgrade-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+        }
+        .unit-info, .upgrade-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .unit-details, .upgrade-details {
+            font-size: 12px;
+            color: #a0a0a0;
+        }
+        h1, h2 {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        h2 {
+            font-size: 20px;
+            margin-top: 20px;
+        }
+        #clickButton {
+            background-color: #008000;
+            font-size: 16px;
+            padding: 15px;
+        }
+        .resource-popup {
+            position: absolute;
+            color: #FFD700;
+            font-weight: bold;
+            pointer-events: none;
+            animation: float-up 1s ease-out;
+            opacity: 0;
+            font-size: 20px;
+        }
+        @keyframes float-up {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        #endgame-message {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            color: #FFD700;
+            font-size: 24px;
+            text-align: center;
+            padding-top: 40vh;
+            z-index: 1000;
+        }
+        #progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #ddd;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+        #progress {
+            width: 0%;
+            height: 100%;
+            background-color: #4CAF50;
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+        }
+        .cost-info {
+            font-size: 12px;
+            color: #a0a0a0;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>转生之我是野菩萨</h1>
+        <div id="resources">
+            <p>功德: <span id="merit">0</span></p>
+            <p>金钱: <span id="money">0</span></p>
+        </div>
+        <button id="clickButton" data-resource="merit" data-cost="0" data-gain="1">修炼功德</button>
+        <div id="progress-bar">
+            <div id="progress"></div>
+        </div>
+        
+        <h2>单位与建筑</h2>
+        <div id="units">
+            <div class="unit-row">
+                <div class="unit-info">
+                    <span>学生:</span>
+                    <span id="students">0</span>
+                </div>
+                <div class="unit-details" id="studentDetails"></div>
+                <div class="cost-info" id="studentCost"></div>
+                <button id="attractStudent" data-resource="students" data-cost-type="merit" data-gain="1">吸引学生</button>
+            </div>
+            <div class="unit-row">
+                <div class="unit-info">
+                    <span>友学:</span>
+                    <span id="friendlyScholars">0</span>
+                </div>
+                <div class="unit-details" id="friendlyScholarDetails"></div>
+                <div class="cost-info" id="friendlyScholarsCost"></div>
+                <button id="recruitFriendlyScholar" data-resource="friendlyScholars" data-cost-type="money" data-gain="1">招募友学</button>
+            </div>
+            <div class="unit-row">
+                <div class="unit-info">
+                    <span>野神殿:</span>
+                    <span id="temples">0</span>
+                </div>
+                <div class="unit-details" id="templeDetails"></div>
+                <div class="cost-info" id="templesCost"></div>
+                <button id="buildTemple" data-resource="temples" data-cost-type="money" data-gain="1">建造野神殿</button>
+            </div>
+            <div class="unit-row">
+                <div class="unit-info">
+                    <span>智者:</span>
+                    <span id="wiseMen">0</span>
+                </div>
+                <div class="unit-details" id="wiseManDetails"></div>
+                <div class="cost-info" id="wiseMenCost"></div>
+                <button id="recruitWiseMan" data-resource="wiseMen" data-cost-type="money" data-gain="1">招募智者</button>
+            </div>
+            <div class="unit-row">
+                <div class="unit-info">
+                    <span>神格:</span>
+                    <span id="divinities">0</span>
+                </div>
+                <div class="unit-details" id="divinityDetails"></div>
+                <div class="cost-info" id="divinitiesCost"></div>
+                <button id="createDivinity" data-resource="divinities" data-cost-type="merit" data-gain="1">创造神格</button>
+            </div>
+            <div class="unit-row">
+                <div class="unit-info">
+                    <span>野神:</span>
+                    <span id="wildGods">0</span>
+                </div>
+                <div class="unit-details" id="wildGodDetails"></div>
+                <div class="cost-info" id="wildGodsCost"></div>
+                <button id="summonWildGod" data-resource="wildGods" data-cost-type="merit" data-gain="1">召唤野神</button>
+            </div>
+        </div>
+
+        <h2>升级</h2>
+        <div id="upgrades">
+            <div class="upgrade-row">
+                <div class="upgrade-info">
+                    <span>心灵开光:</span>
+                    <span id="enlightenment">0</span>
+                </div>
+                <div class="upgrade-details" id="enlightenmentDetails"></div>
+                <div class="cost-info" id="enlightenmentCost"></div>
+                <button id="buyEnlightenment" data-resource="enlightenment" data-cost-type="merit" data-gain="1">心灵开光</button>
+            </div>
+            <div class="upgrade-row">
+                <div class="upgrade-info">
+                    <span>殿宇扩建:</span>
+                    <span id="templeExpansion">0</span>
+                </div>
+                <div class="upgrade-details" id="templeExpansionDetails"></div>
+                <div class="cost-info" id="templeExpansionCost"></div>
+                <button id="buyTempleExpansion" data-resource="templeExpansion" data-cost-type="money" data-gain="1">殿宇扩建</button>
+            </div>
+            <div class="upgrade-row">
+                <div class="upgrade-info">
+                    <span>时间加速:</span>
+                    <span id="timeAcceleration">0</span>
+                </div>
+                <div class="upgrade-details" id="timeAccelerationDetails"></div>
+                <div class="cost-info" id="timeAccelerationCost"></div>
+                <button id="buyTimeAcceleration" data-resource="timeAcceleration" data-cost-type="merit" data-gain="1">时间加速</button>
+            </div>
+        </div>
+    </div>
+    <div id="endgame-message">
+        恭喜你！功德圆满，你已成为一代野菩萨！
+    </div>
+
+    <script>
+        let gameState = {
+            merit: 0,
+            money: 0,
+            students: 0,
+            friendlyScholars: 0,
+            wiseMen: 0,
+            temples: 0,
+            divinities: 0,
+            wildGods: 0,
+            enlightenment: 0,
+            templeExpansion: 0,
+            timeAcceleration: 0,
+            clickPower: 1,
+            templePower: 10,
+            studentPower: 1
+        };
+
+        let unitCosts = {
+            students: 50,
+            friendlyScholars: 500,
+            temples: 1000,
+            wiseMen: 5000,
+            divinities: 10000,
+            wildGods: 100000
+        };
+
+        let upgradeCosts = {
+            enlightenment: 1000,
+            templeExpansion: 20000,
+            timeAcceleration: 100000
+        };
+
+        const ENDGAME_MERIT = 100000000;
+        const COST_GROWTH_RATE = 1.05;
+
+        function updateDisplay() {
+            for (let key in gameState) {
+                let element = document.getElementById(key);
+                if (element) {
+                    element.textContent = Math.floor(gameState[key]);
+                }
+            }
+            
+            updateButtonStates();
+            updateUnitDetails();
+            updateUpgradeDetails();
+            updateCostInfo();
+            
+            const progress = (gameState.merit / ENDGAME_MERIT) * 100;
+            document.getElementById('progress').style.width = `${Math.min(progress, 100)}%`;
+        }
+
+        function updateButtonStates() {
+            document.querySelectorAll('button').forEach(button => {
+                const resource = button.dataset.resource;
+                const costType = button.dataset.costType;
+                let cost;
+                if (resource in unitCosts) {
+                    cost = unitCosts[resource];
+                } else if (resource in upgradeCosts) {
+                    cost = upgradeCosts[resource];
+                } else {
+                    cost = parseInt(button.dataset.cost);
+                }
+                if (costType && gameState[costType] < cost) {
+                    button.disabled = true;
+                } else {
+                    button.disabled = false;
+                }
+            });
+        }
+
+        function updateUnitDetails() {
+            let timeMultiplier = 1 + gameState.timeAcceleration * 0.1;
+            let studentEfficiency = gameState.studentPower * (1 + 0.1 * gameState.friendlyScholars) * timeMultiplier;
+            let templeEfficiency = gameState.templePower * (1 + gameState.templeExpansion * 0.1) * (1 + 0.1 * gameState.divinities) * timeMultiplier;
+
+            document.getElementById('studentDetails').textContent = `每秒产生 ${(gameState.students * studentEfficiency).toFixed(1)} 金钱`;
+            document.getElementById('friendlyScholarDetails').textContent = `学生效率提升 ${(gameState.friendlyScholars * 10).toFixed(1)}%`;
+            document.getElementById('templeDetails').textContent = `每秒产生 ${(gameState.temples * templeEfficiency).toFixed(1)} 功德`;
+            document.getElementById('wiseManDetails').textContent = `每秒产生 ${(gameState.wiseMen * timeMultiplier).toFixed(2)} 学生`;
+            document.getElementById('divinityDetails').textContent = `野神殿效率提升 ${(gameState.divinities * 10).toFixed(1)}%`;
+            document.getElementById('wildGodDetails').textContent = `每秒产生 ${(gameState.wildGods * timeMultiplier).toFixed(2)} 野神殿`;
+        }
+
+        function updateUpgradeDetails() {
+            document.getElementById('enlightenmentDetails').textContent = `点击效率提升 ${(gameState.enlightenment * 50).toFixed(1)}%`;
+            document.getElementById('templeExpansionDetails').textContent = `野神殿效率提升 ${(gameState.templeExpansion * 10).toFixed(1)}%`;
+            document.getElementById('timeAccelerationDetails').textContent = `资源生产速度提升 ${(gameState.timeAcceleration * 10).toFixed(1)}%`;
+        }
+
+        function updateCostInfo() {
+            for (let resource in unitCosts) {
+                let costElement = document.getElementById(`${resource}Cost`);
+                if (costElement) {
+                    let costType = document.querySelector(`button[data-resource="${resource}"]`).dataset.costType;
+                    costElement.textContent = `费用: ${unitCosts[resource]} ${costType === 'merit' ? '功德' : '金钱'}`;
+                }
+            }
+            for (let resource in upgradeCosts) {
+                let costElement = document.getElementById(`${resource}Cost`);
+                if (costElement) {
+                    let costType = document.querySelector(`button[data-resource="${resource}"]`).dataset.costType;
+                    costElement.textContent = `费用: ${upgradeCosts[resource]} ${costType === 'merit' ? '功德' : '金钱'}`;
+                }
+            }
+        }
+
+        function createResourcePopup(button, amount) {
+            const popup = document.createElement('span');
+            popup.textContent = `+${amount.toFixed(1)}`;
+            popup.className = 'resource-popup';
+            popup.style.left = `${Math.random() * 80 + 10}%`;
+            popup.style.top = `${Math.random() * 80 + 10}%`;
+            button.appendChild(popup);
+            setTimeout(() => popup.remove(), 1000);
+        }
+
+        function handleButtonAction(button) {
+            const resource = button.dataset.resource;
+            const costType = button.dataset.costType;
+            let cost, gain;
+
+            if (resource in unitCosts) {
+                cost = unitCosts[resource];
+                gain = 1;
+            } else if (resource in upgradeCosts) {
+                cost = upgradeCosts[resource];
+                gain = 1;
+            } else {
+                cost = parseInt(button.dataset.cost);
+                gain = parseInt(button.dataset.gain);
+            }
+
+            if (costType && gameState[costType] >= cost) {
+                gameState[costType] -= cost;
+                gameState[resource] += gain;
+                if (resource !== 'students' && resource !== 'temples') {
+                    if (resource in unitCosts) {
+                        unitCosts[resource] = Math.floor(unitCosts[resource] * COST_GROWTH_RATE);
+                    } else if (resource in upgradeCosts) {
+                        upgradeCosts[resource] = Math.floor(upgradeCosts[resource] * COST_GROWTH_RATE);
+                    }
+                }
+                createResourcePopup(button, gain);
+                updateDisplay();
+            } else if (!costType) {
+                const meritGain = gain * gameState.clickPower * (1 + gameState.enlightenment * 0.5);
+                gameState[resource] += meritGain;
+                createResourcePopup(button, meritGain);
+                updateDisplay();
+            }
+
+            checkEndgame();
+        }
+
+        function checkEndgame() {
+            if (gameState.merit >= ENDGAME_MERIT) {
+                document.getElementById('endgame-message').style.display = 'block';
+            }
+        }
+
+        document.querySelectorAll('button').forEach(button => {
+            let intervalId;
+            let startX, startY;
+            let isTouching = false;
+            const moveThreshold = 10;
+
+            const startAction = (e) => {
+                if (e.type === 'touchstart') {
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                    isTouching = true;
+                }
+                if (!button.disabled) {
+                    handleButtonAction(button);
+                    intervalId = setInterval(() => {
+                        if (!button.disabled) {
+                            handleButtonAction(button);
+                        } else {
+                            stopAction();
+                        }
+                    }, 100);
+                }
+            };
+
+            const stopAction = () => {
+                clearInterval(intervalId);
+                isTouching = false;
+            };
+
+            const checkMovement = (e) => {
+                if (!isTouching) return;
+                const currentX = e.touches[0].clientX;
+                const currentY = e.touches[0].clientY;
+                const deltaX = Math.abs(currentX - startX);
+                const deltaY = Math.abs(currentY - startY);
+
+                if (deltaX > moveThreshold || deltaY > moveThreshold) {
+                    stopAction();
+                }
+            };
+
+            button.addEventListener('mousedown', startAction);
+            button.addEventListener('touchstart', startAction);
+            button.addEventListener('mouseup', stopAction);
+            button.addEventListener('mouseleave', stopAction);
+            button.addEventListener('touchend', stopAction);
+            button.addEventListener('touchcancel', stopAction);
+            button.addEventListener('touchmove', checkMovement);
+        });
+
+        setInterval(() => {
+            let timeMultiplier = 1 + gameState.timeAcceleration * 0.1;
+            let studentEfficiency = gameState.studentPower * (1 + 0.1 * gameState.friendlyScholars) * timeMultiplier;
+            let templeEfficiency = gameState.templePower * (1 + gameState.templeExpansion * 0.1) * (1 + 0.1 * gameState.divinities) * timeMultiplier;
+
+            // 更新金钱
+            gameState.money += gameState.students * studentEfficiency;
+
+            // 更新功德
+            gameState.merit += gameState.temples * templeEfficiency;
+
+            // 更新学生数量（由智者产生，不消耗功德）
+            let newStudents = gameState.wiseMen * timeMultiplier;
+            gameState.students += newStudents;
+
+            // 更新野神殿数量（由野神产生，不消耗金钱）
+            let newTemples = gameState.wildGods * timeMultiplier;
+            gameState.temples += newTemples;
+
+            updateDisplay();
+            checkEndgame();
+        }, 1000);
+
+        updateDisplay();
+    </script>
+</body>
+</html>
